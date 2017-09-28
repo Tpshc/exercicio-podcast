@@ -13,9 +13,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="8"
-            android:textSize="18sp"
             android:focusable="false"
-            android:focusableInTouchMode="false"/>
+            android:focusableInTouchMode="false"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
         <Button
             android:id="@+id/item_action"
             android:layout_width="wrap_content"
@@ -31,6 +32,7 @@
         android:id="@+id/item_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="@android:color/black"
         android:textSize="12sp" />
 
 </LinearLayout>

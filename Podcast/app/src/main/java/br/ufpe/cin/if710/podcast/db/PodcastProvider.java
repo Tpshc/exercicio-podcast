@@ -26,8 +26,24 @@ public class PodcastProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        long id = db.getWritableDatabase().insert(PodcastDBHelper.DATABASE_TABLE, null, values);
-        return Uri.withAppendedPath(PodcastProviderContract.EPISODE_LIST_URI, Long.toString(id));
+        String downloadlink = values.getAsString(PodcastDBHelper.EPISODE_DOWNLOAD_LINK);
+        String title = values.getAsString(PodcastDBHelper.EPISODE_TITLE);
+        String date = values.getAsString(PodcastDBHelper.EPISODE_DATE);
+        String desc = values.getAsString(PodcastDBHelper.EPISODE_DESC);
+        String[] selectionArgs = {downloadlink,title,date,desc};
+        String selection = PodcastDBHelper.EPISODE_DOWNLOAD_LINK + "=? AND " +
+                PodcastDBHelper.EPISODE_TITLE + "=? AND " +
+                PodcastDBHelper.EPISODE_DATE + "=? AND " +
+                PodcastDBHelper.EPISODE_DESC + "=?";
+        Cursor cursor = query(PodcastProviderContract.EPISODE_LIST_URI,PodcastDBHelper.columns, selection,selectionArgs,null);
+        if(cursor.getCount()<=0){
+
+            long id = db.getWritableDatabase().insert(PodcastDBHelper.DATABASE_TABLE, null, values);
+            return Uri.withAppendedPath(PodcastProviderContract.EPISODE_LIST_URI, Long.toString(id));
+        }
+        else{
+            return Uri.EMPTY;
+        }
     }
 
     @Override
@@ -50,7 +66,6 @@ public class PodcastProvider extends ContentProvider {
                 null,                                     // don't filter by row groups
                 sortOrder                                 // The sort order
                 );
-
         return cursor;
     }
 

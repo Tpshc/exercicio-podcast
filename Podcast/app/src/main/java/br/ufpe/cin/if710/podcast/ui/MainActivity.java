@@ -3,6 +3,7 @@ package br.ufpe.cin.if710.podcast.ui;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -102,20 +103,38 @@ public class MainActivity extends Activity {
                     values.put(PodcastDBHelper.EPISODE_DESC, item.getDescription());
                     values.put(PodcastDBHelper.EPISODE_DOWNLOAD_LINK, item.getDownloadLink());
                     values.put(PodcastDBHelper.EPISODE_LINK, item.getLink());
-                    values.put(PodcastDBHelper.EPISODE_FILE_URI, "abc");
+                    values.put(PodcastDBHelper.EPISODE_FILE_URI, "-");
                     //podcastProvider.insert(PodcastProviderContract.EPISODE_LIST_URI,values);
                     valuesList[count++] = values;
                 }
-
                 podcastProvider.bulkInsert(PodcastProviderContract.EPISODE_LIST_URI,valuesList);
 
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (XmlPullParserException e) {
+            } catch (IOException|XmlPullParserException e) {
                 e.printStackTrace();
             }
+            addDataBaseItens(itemList);
             return itemList;
+        }
+
+        private void addDataBaseItens(List<ItemFeed> itemList){
+            Cursor cursor = podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI,PodcastDBHelper.columns, null,null,null);
+            try {
+                while (cursor.moveToNext()) {
+                    ItemFeed item = new ItemFeed(cursor);
+                    tryAddItemInList(item, itemList);
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        private void tryAddItemInList(ItemFeed newItem, List<ItemFeed> itemList){
+            for(ItemFeed item : itemList){
+                if(item.equals(newItem)){
+                    return;
+                }
+            }
+            itemList.add(newItem);
         }
 
         @Override
@@ -152,6 +171,7 @@ public class MainActivity extends Activity {
         try {
             URL url = new URL(feed);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(1000);
             in = conn.getInputStream();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];

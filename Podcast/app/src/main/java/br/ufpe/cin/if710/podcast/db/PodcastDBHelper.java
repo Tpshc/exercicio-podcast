@@ -56,4 +56,6 @@ public class PodcastDBHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
         throw new RuntimeException("inutilizado");
     }
+
+
 }
