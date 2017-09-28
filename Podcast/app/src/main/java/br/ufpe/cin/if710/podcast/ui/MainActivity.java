@@ -1,13 +1,12 @@
 package br.ufpe.cin.if710.podcast.ui;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -22,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.ufpe.cin.if710.podcast.R;
+import br.ufpe.cin.if710.podcast.db.PodcastDBHelper;
+import br.ufpe.cin.if710.podcast.db.PodcastProvider;
+import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.domain.XmlFeedParser;
 import br.ufpe.cin.if710.podcast.ui.adapter.XmlFeedAdapter;
@@ -33,6 +35,7 @@ public class MainActivity extends Activity {
     //TODO teste com outros links de podcast
 
     private ListView items;
+    private PodcastProvider podcastProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +43,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         items = (ListView) findViewById(R.id.items);
+        podcastProvider = new PodcastProvider();
     }
 
     @Override
@@ -87,6 +91,23 @@ public class MainActivity extends Activity {
             List<ItemFeed> itemList = new ArrayList<>();
             try {
                 itemList = XmlFeedParser.parse(getRssFeed(params[0]));
+                ContentValues[] valuesList = new ContentValues[itemList.size()];
+                int count = 0;
+                for(ItemFeed item : itemList){
+                    ContentValues values = new ContentValues();
+                    values.put(PodcastDBHelper.EPISODE_TITLE, item.getTitle());
+                    values.put(PodcastDBHelper.EPISODE_DATE, item.getPubDate());
+                    values.put(PodcastDBHelper.EPISODE_DESC, item.getDescription());
+                    values.put(PodcastDBHelper.EPISODE_DOWNLOAD_LINK, item.getDownloadLink());
+                    values.put(PodcastDBHelper.EPISODE_LINK, item.getLink());
+                    values.put(PodcastDBHelper.EPISODE_FILE_URI, "abc");
+                    //podcastProvider.insert(PodcastProviderContract.EPISODE_LIST_URI,values);
+                    valuesList[count++] = values;
+                }
+
+                podcastProvider.bulkInsert(PodcastProviderContract.EPISODE_LIST_URI,valuesList);
+
+
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (XmlPullParserException e) {
