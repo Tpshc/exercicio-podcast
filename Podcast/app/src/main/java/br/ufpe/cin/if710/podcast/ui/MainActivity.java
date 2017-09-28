@@ -7,6 +7,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -126,7 +128,7 @@ public class MainActivity extends Activity {
             //atualizar o list view
             items.setAdapter(adapter);
             items.setTextFilterEnabled(true);
-            /*
+            //*
             items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -134,6 +136,9 @@ public class MainActivity extends Activity {
                     ItemFeed item = adapter.getItem(position);
                     String msg = item.getTitle() + " " + item.getLink();
                     Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(view.getContext(),EpisodeDetailActivity.class);
+                    intent.putExtra("item-selected",item );
+                    startActivity(intent);
                 }
             });
             /**/

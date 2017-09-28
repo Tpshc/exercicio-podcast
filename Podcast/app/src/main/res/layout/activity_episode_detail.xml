@@ -6,4 +6,78 @@
     android:layout_height="match_parent"
     tools:context="br.ufpe.cin.if710.podcast.ui.EpisodeDetailActivity">
 
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="8dp">
+        
+        <TextView
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:text="Title:"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/item_title"
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:textSize="18sp" />
+
+        <TextView
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:text="Publication date:"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/item_pubdate"
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:textSize="18sp" />
+
+        <TextView
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:text="Description:"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/item_description"
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:textSize="18sp" />
+
+        <TextView
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:text="Link:"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/item_link"
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:textSize="18sp" />
+
+        <TextView
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:text="Download link:"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/item_downloadlink"
+            android:layout_width="368dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
 </android.support.constraint.ConstraintLayout>
