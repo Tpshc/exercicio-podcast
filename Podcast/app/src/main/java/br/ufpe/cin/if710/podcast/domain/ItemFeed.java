@@ -1,8 +1,10 @@
 package br.ufpe.cin.if710.podcast.domain;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 
 import java.io.Serializable;
+import java.util.List;
 
 import br.ufpe.cin.if710.podcast.db.PodcastDBHelper;
 
@@ -37,6 +39,33 @@ public class ItemFeed implements Serializable{
         this.downloadLink = cursor.getString(downloadlink_index);
     }
 
+    public ContentValues getContentValues(){
+        ContentValues values = new ContentValues();
+        values.put(PodcastDBHelper.EPISODE_TITLE, getTitle());
+        values.put(PodcastDBHelper.EPISODE_DATE, getPubDate());
+        values.put(PodcastDBHelper.EPISODE_DESC, getDescription());
+        values.put(PodcastDBHelper.EPISODE_DOWNLOAD_LINK, getDownloadLink());
+        values.put(PodcastDBHelper.EPISODE_LINK, getLink());
+        return values;
+
+    }
+
+    public boolean isIn(List<ItemFeed> list){
+        for (ItemFeed item : list) {
+            if(this.equals(item)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean equals(ItemFeed item){
+        return (getTitle().equals(item.getTitle())) &&
+                getLink().equals(item.getLink()) &&
+                getDescription().equals(item.getDescription()) &&
+                getPubDate().equals(item.getPubDate()) &&
+                getDownloadLink().equals(item.getDownloadLink());
+    }
     public String getTitle() {
         return title;
     }

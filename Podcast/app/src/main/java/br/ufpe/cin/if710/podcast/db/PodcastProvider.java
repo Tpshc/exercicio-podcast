@@ -24,27 +24,14 @@ public class PodcastProvider extends ContentProvider {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    @Override
-    public Uri insert(Uri uri, ContentValues values) {
-        String downloadlink = values.getAsString(PodcastDBHelper.EPISODE_DOWNLOAD_LINK);
-        String title = values.getAsString(PodcastDBHelper.EPISODE_TITLE);
-        String date = values.getAsString(PodcastDBHelper.EPISODE_DATE);
-        String desc = values.getAsString(PodcastDBHelper.EPISODE_DESC);
-        String[] selectionArgs = {downloadlink,title,date,desc};
-        String selection = PodcastDBHelper.EPISODE_DOWNLOAD_LINK + "=? AND " +
-                PodcastDBHelper.EPISODE_TITLE + "=? AND " +
-                PodcastDBHelper.EPISODE_DATE + "=? AND " +
-                PodcastDBHelper.EPISODE_DESC + "=?";
-        Cursor cursor = query(PodcastProviderContract.EPISODE_LIST_URI,PodcastDBHelper.columns, selection,selectionArgs,null);
-        if(cursor.getCount()<=0){
-
+    public Uri insert(Uri uri, ContentValues values){
+        if(isPodcastUri(uri)){
             long id = db.getWritableDatabase().insert(PodcastDBHelper.DATABASE_TABLE, null, values);
             return Uri.withAppendedPath(PodcastProviderContract.EPISODE_LIST_URI, Long.toString(id));
         }
-        else{
-            return Uri.EMPTY;
-        }
+        return null;
     }
+
 
     @Override
     public boolean onCreate() {
@@ -57,15 +44,18 @@ public class PodcastProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
 
-        Cursor cursor = db.getWritableDatabase().query(
-                PodcastDBHelper.DATABASE_TABLE,           // The table to query
-                projection,                               // The columns to return
-                selection,                                // The columns for the WHERE clause
-                selectionArgs,                            // The values for the WHERE clause
-                null,                                     // don't group the rows
-                null,                                     // don't filter by row groups
-                sortOrder                                 // The sort order
-                );
+        Cursor cursor = null;
+        if(isPodcastUri(uri)) {
+            cursor = db.getWritableDatabase().query(
+                    PodcastDBHelper.DATABASE_TABLE,           // The table to query
+                    projection,                               // The columns to return
+                    selection,                                // The columns for the WHERE clause
+                    selectionArgs,                            // The values for the WHERE clause
+                    null,                                     // don't group the rows
+                    null,                                     // don't filter by row groups
+                    sortOrder                                 // The sort order
+            );
+        }
         return cursor;
     }
 
@@ -73,13 +63,19 @@ public class PodcastProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
 
+        if(isPodcastUri(uri)){
+            return db.getWritableDatabase().update(
+                    PodcastDBHelper.DATABASE_TABLE,
+                    values,
+                    selection,
+                    selectionArgs);
 
-        return db.getWritableDatabase().update(
-                PodcastDBHelper.DATABASE_TABLE,
-                values,
-                selection,
-                selectionArgs);
+        }
+        return  0;
+        }
 
+
+    private boolean isPodcastUri(Uri uri) {
+        return uri.getLastPathSegment().equals(PodcastDBHelper.DATABASE_TABLE);
     }
-
 }

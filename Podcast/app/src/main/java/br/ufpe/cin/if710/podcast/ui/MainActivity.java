@@ -83,6 +83,8 @@ public class MainActivity extends Activity {
         adapter.clear();
     }
 
+
+
     private class DownloadXmlTask extends AsyncTask<String, Void, List<ItemFeed>> {
         @Override
         protected void onPreExecute() {
@@ -92,49 +94,39 @@ public class MainActivity extends Activity {
         @Override
         protected List<ItemFeed> doInBackground(String... params) {
             List<ItemFeed> itemList = new ArrayList<>();
+            List<ItemFeed> dbList = getItemListFromDataBase();
             try {
                 itemList = XmlFeedParser.parse(getRssFeed(params[0]));
-                ContentValues[] valuesList = new ContentValues[itemList.size()];
-                int count = 0;
-                for(ItemFeed item : itemList){
-                    ContentValues values = new ContentValues();
-                    values.put(PodcastDBHelper.EPISODE_TITLE, item.getTitle());
-                    values.put(PodcastDBHelper.EPISODE_DATE, item.getPubDate());
-                    values.put(PodcastDBHelper.EPISODE_DESC, item.getDescription());
-                    values.put(PodcastDBHelper.EPISODE_DOWNLOAD_LINK, item.getDownloadLink());
-                    values.put(PodcastDBHelper.EPISODE_LINK, item.getLink());
-                    values.put(PodcastDBHelper.EPISODE_FILE_URI, "-");
-                    //podcastProvider.insert(PodcastProviderContract.EPISODE_LIST_URI,values);
-                    valuesList[count++] = values;
-                }
-                podcastProvider.bulkInsert(PodcastProviderContract.EPISODE_LIST_URI,valuesList);
-
             } catch (IOException|XmlPullParserException e) {
                 e.printStackTrace();
             }
-            addDataBaseItens(itemList);
-            return itemList;
+            mergeListsAndInsertNewItensIntoDB(dbList,itemList,podcastProvider);
+            return dbList;
         }
 
-        private void addDataBaseItens(List<ItemFeed> itemList){
+        private List<ItemFeed> getItemListFromDataBase(){
             Cursor cursor = podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI,PodcastDBHelper.columns, null,null,null);
+            ArrayList<ItemFeed> list = new ArrayList<ItemFeed>();
             try {
                 while (cursor.moveToNext()) {
-                    ItemFeed item = new ItemFeed(cursor);
-                    tryAddItemInList(item, itemList);
+                    list.add(new ItemFeed(cursor));
                 }
             } finally {
                 cursor.close();
             }
+            return list;
         }
 
-        private void tryAddItemInList(ItemFeed newItem, List<ItemFeed> itemList){
-            for(ItemFeed item : itemList){
-                if(item.equals(newItem)){
-                    return;
-                }
+        private void mergeListsAndInsertNewItensIntoDB(List<ItemFeed> dbList,List<ItemFeed> downloadList, PodcastProvider provider){
+            for(ItemFeed item : downloadList){
+                if(item.isIn(dbList)) continue;
+
+                dbList.add(item);
+
+                ContentValues values = item.getContentValues();
+                values.put(PodcastDBHelper.EPISODE_FILE_URI, "");
+                provider.insert(PodcastProviderContract.EPISODE_LIST_URI,values);
             }
-            itemList.add(newItem);
         }
 
         @Override
@@ -171,7 +163,6 @@ public class MainActivity extends Activity {
         try {
             URL url = new URL(feed);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(1000);
             in = conn.getInputStream();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
