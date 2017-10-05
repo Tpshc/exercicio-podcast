@@ -1,15 +1,20 @@
 package br.ufpe.cin.if710.podcast.ui;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -29,6 +34,7 @@ import br.ufpe.cin.if710.podcast.db.PodcastProvider;
 import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.domain.XmlFeedParser;
+import br.ufpe.cin.if710.podcast.service.DownloadService;
 import br.ufpe.cin.if710.podcast.ui.adapter.XmlFeedAdapter;
 
 public class MainActivity extends Activity {
@@ -73,7 +79,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        new DownloadXmlTask().execute(RSS_FEED);
+        new DownloadXmlTask().execute(RSS_FEED);IntentFilter f=new IntentFilter(DownloadService.DOWNLOAD_COMPLETE);
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(onDownloadCompleteEvent, f);
     }
 
     @Override
@@ -123,8 +130,7 @@ public class MainActivity extends Activity {
 
                 dbList.add(item);
 
-                ContentValues values = item.getContentValues();
-                values.put(PodcastDBHelper.EPISODE_FILE_URI, "");
+                ContentValues values = item.getFullContentValues();
                 provider.insert(PodcastProviderContract.EPISODE_LIST_URI,values);
             }
         }
@@ -178,4 +184,29 @@ public class MainActivity extends Activity {
         }
         return rssFeed;
     }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(onDownloadCompleteEvent);
+    }
+
+    private BroadcastReceiver onDownloadCompleteEvent=new BroadcastReceiver() {
+        public void onReceive(Context ctxt, Intent i) {
+
+
+            int position = Integer.parseInt(i.getStringExtra("selected-item-position"));
+
+            Button action = items.getChildAt(position).findViewById(R.id.item_action);
+            Toast.makeText(getApplicationContext(), "Download compete", Toast.LENGTH_SHORT).show();
+            action.setEnabled(true);
+            action.setText(getString(R.string.action_listen));
+
+
+
+        }
+    };
+
+
 }
