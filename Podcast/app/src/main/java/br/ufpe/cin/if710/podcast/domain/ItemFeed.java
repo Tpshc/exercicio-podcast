@@ -1,23 +1,33 @@
 package br.ufpe.cin.if710.podcast.domain;
 
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
+import android.arch.persistence.room.PrimaryKey;
 import android.content.ContentValues;
 import android.database.Cursor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 
 import br.ufpe.cin.if710.podcast.db.PodcastDBHelper;
 
+@Entity(tableName="episodes")
 public class ItemFeed implements Serializable{
+    @PrimaryKey(autoGenerate = true)
+    private final int _id;
     private final String title;
     private final String link;
     private final String pubDate;
     private final String description;
     private final String downloadLink;
+    @ColumnInfo(name = "downloadUri")
     private String episode_uri = "";
 
-
+    @Ignore
     public ItemFeed(String title, String link, String pubDate, String description, String downloadLink, String episode_uri) {
+        this._id =  0;//evitando exception por causa do room
         this.title = title;
         this.link = link;
         this.pubDate = pubDate;
@@ -26,7 +36,19 @@ public class ItemFeed implements Serializable{
         this.episode_uri = episode_uri;
     }
 
+    public ItemFeed(int id, String title, String link, String pubDate, String description, String downloadLink, String episode_uri) {
+        this._id = id;
+        this.title = title;
+        this.link = link;
+        this.pubDate = pubDate;
+        this.description = description;
+        this.downloadLink = downloadLink;
+        this.episode_uri = episode_uri;
+    }
+
+    @Ignore
     public ItemFeed(Cursor cursor){
+        this._id =  cursor.getColumnIndexOrThrow(PodcastDBHelper._ID);//evitando exception por causa do room
         int title_index = cursor.getColumnIndexOrThrow(PodcastDBHelper.EPISODE_TITLE);
         int date_index = cursor.getColumnIndexOrThrow(PodcastDBHelper.EPISODE_DATE);
         int desc_index = cursor.getColumnIndexOrThrow(PodcastDBHelper.EPISODE_DESC);
@@ -73,6 +95,11 @@ public class ItemFeed implements Serializable{
                 getDownloadLink().equals(item.getDownloadLink());
 
     }
+
+    public int get_id() {
+        return _id;
+    }
+
     public String getTitle() {
         return title;
     }

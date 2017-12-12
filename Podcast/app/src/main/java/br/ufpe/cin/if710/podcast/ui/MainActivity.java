@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +33,7 @@ import br.ufpe.cin.if710.podcast.R;
 import br.ufpe.cin.if710.podcast.db.PodcastDBHelper;
 import br.ufpe.cin.if710.podcast.db.PodcastProvider;
 import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
+import br.ufpe.cin.if710.podcast.db.room.AppDatabase;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.domain.XmlFeedParser;
 import br.ufpe.cin.if710.podcast.service.DownloadService;
@@ -42,9 +44,10 @@ public class MainActivity extends Activity {
     //ao fazer envio da resolucao, use este link no seu codigo!
     private final String RSS_FEED = "http://leopoldomt.com/if710/fronteirasdaciencia.xml";
     //TODO teste com outros links de podcast
-
+    private boolean isUsingRoom;
     private ListView items;
     private PodcastProvider podcastProvider;
+    private AppDatabase roomDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +56,8 @@ public class MainActivity extends Activity {
 
         items = (ListView) findViewById(R.id.items);
         podcastProvider = new PodcastProvider();
+        roomDB = AppDatabase.getAppDatabase(this.getApplicationContext());//room
+        isUsingRoom = true;
     }
 
     @Override
@@ -112,26 +117,51 @@ public class MainActivity extends Activity {
         }
 
         private List<ItemFeed> getItemListFromDataBase(){
-            Cursor cursor = podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI,PodcastDBHelper.columns, null,null,null);
-            ArrayList<ItemFeed> list = new ArrayList<ItemFeed>();
-            try {
-                while (cursor.moveToNext()) {
-                    list.add(new ItemFeed(cursor));
+            List<ItemFeed> list;
+            if(isUsingRoom){
+
+                list = getItemListFromRoomDB();
+
+            }else{
+
+                Cursor cursor = podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI,PodcastDBHelper.columns, null,null,null);
+                list = new ArrayList<ItemFeed>();
+                try {
+                    while (cursor.moveToNext()) {
+                        list.add(new ItemFeed(cursor));
+                    }
+                } finally {
+                    cursor.close();
                 }
-            } finally {
-                cursor.close();
             }
             return list;
         }
 
+        private List<ItemFeed> getItemListFromRoomDB(){
+            return roomDB.itemFeedDAO().getAll();
+        }
+
+        private void intertItensIntoRoomDB(List<ItemFeed> items){
+            long[] x = roomDB.itemFeedDAO().insertAll(items);
+        }
+
         private void mergeListsAndInsertNewItensIntoDB(List<ItemFeed> dbList,List<ItemFeed> downloadList, PodcastProvider provider){
-            for(ItemFeed item : downloadList){
+            List<ItemFeed> itemsToBeInserted = new ArrayList<ItemFeed>();
+            for(ItemFeed item : downloadList){ //refatorar para bulkinsert
                 if(item.isIn(dbList)) continue;
 
                 dbList.add(item);
 
-                ContentValues values = item.getFullContentValues();
-                provider.insert(PodcastProviderContract.EPISODE_LIST_URI,values);
+                if(!isUsingRoom){
+                    ContentValues values = item.getFullContentValues();
+                    provider.insert(PodcastProviderContract.EPISODE_LIST_URI,values); //insert
+                }else{
+                    itemsToBeInserted.add(item);
+                }
+            }
+
+            if(isUsingRoom){
+                intertItensIntoRoomDB(itemsToBeInserted);
             }
         }
 
@@ -195,11 +225,10 @@ public class MainActivity extends Activity {
     private BroadcastReceiver onDownloadCompleteEvent=new BroadcastReceiver() {
         public void onReceive(Context ctxt, Intent i) {
 
-
             int position = Integer.parseInt(i.getStringExtra("selected-item-position"));
 
             Button action = items.getChildAt(position).findViewById(R.id.item_action);
-            Toast.makeText(getApplicationContext(), "Download compete", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Download complete", Toast.LENGTH_SHORT).show();
             action.setEnabled(true);
             action.setText(getString(R.string.action_listen));
 
