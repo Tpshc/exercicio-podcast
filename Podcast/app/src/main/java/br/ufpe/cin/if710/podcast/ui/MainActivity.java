@@ -161,7 +161,9 @@ public class MainActivity extends Activity {
 
                     ContentValues[] contentValues = new ContentValues[itemsToBeInserted.size()];
                     for (int i = 0; i < itemsToBeInserted.size(); i++){
-                        contentValues[i] = itemsToBeInserted.get(i).getFullContentValues();
+                        ContentValues contentValueTemp = new ContentValues();
+                        itemsToBeInserted.get(i).getFullContentValues(contentValueTemp);
+                        contentValues[i] = contentValueTemp;
                     }
                     provider.bulkInsert(PodcastProviderContract.EPISODE_LIST_URI,contentValues);
 
