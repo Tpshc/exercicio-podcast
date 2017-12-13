@@ -235,9 +235,6 @@ public class MainActivity extends Activity {
             Toast.makeText(getApplicationContext(), "Download complete", Toast.LENGTH_SHORT).show();
             action.setEnabled(true);
             action.setText(getString(R.string.action_listen));
-
-
-
         }
     };
 
