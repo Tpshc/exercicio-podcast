@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -44,7 +45,7 @@ public class MainActivity extends Activity {
     //ao fazer envio da resolucao, use este link no seu codigo!
     private final String RSS_FEED = "http://leopoldomt.com/if710/fronteirasdaciencia.xml";
     //TODO teste com outros links de podcast
-    private final boolean isUsingRoom = false;
+    private final boolean isUsingRoom = true;
     private ListView items;
     private PodcastProvider podcastProvider;
     private AppDatabase roomDB;
@@ -176,7 +177,7 @@ public class MainActivity extends Activity {
             Toast.makeText(getApplicationContext(), "terminando...", Toast.LENGTH_SHORT).show();
 
             //Adapter Personalizado
-            XmlFeedAdapter adapter = new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, feed);
+            XmlFeedAdapter adapter = new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, feed, MainActivity.this);
 
             //atualizar o list view
             items.setAdapter(adapter);
