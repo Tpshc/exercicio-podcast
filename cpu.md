@@ -1,1 +1,2 @@
 - Refatorei método mergeListsAndInsertNewItensIntoDB() da main activity, para fazer um bulk insert no lugar de vários inserts
+- Para reduzir um pouco o processamento, é exibido apenas uma parte da lista de itens na tela principal, e a partir de então, ao dar scroll até o fim, ele gera mais itens a ser mostrados.

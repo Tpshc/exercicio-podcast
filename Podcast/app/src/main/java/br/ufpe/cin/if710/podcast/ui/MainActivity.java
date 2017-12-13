@@ -10,10 +10,11 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
@@ -48,11 +49,16 @@ public class MainActivity extends Activity {
     private ListView items;
     private PodcastProvider podcastProvider;
     private AppDatabase roomDB;
+    private View footerView;
+    private List<ItemFeed> totalItemFeed;
+    private boolean loadingMore = false;
+    private int itemsToShow = 10;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        footerView = ((LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.activity_main, null, false);
 
         items = (ListView) findViewById(R.id.items);
         podcastProvider = new PodcastProvider();
@@ -85,6 +91,26 @@ public class MainActivity extends Activity {
         super.onStart();
         new DownloadXmlTask().execute(RSS_FEED);IntentFilter f=new IntentFilter(DownloadService.DOWNLOAD_COMPLETE);
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(onDownloadCompleteEvent, f);
+
+
+
+        items.setOnScrollListener(new AbsListView.OnScrollListener(){
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {}
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                int lastInScreen = firstVisibleItem + visibleItemCount;
+
+                if((lastInScreen == totalItemCount) && !(loadingMore)){
+                    Thread thread =  new Thread(null, loadMoreListItems);
+                    thread.start();
+                }
+
+            }
+
+        });
+
     }
 
     @Override
@@ -174,29 +200,18 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(List<ItemFeed> feed) {
             Toast.makeText(getApplicationContext(), "terminando...", Toast.LENGTH_SHORT).show();
+            totalItemFeed = feed;
+            items.addFooterView(footerView);
 
-            //Adapter Personalizado
-            XmlFeedAdapter adapter = new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, feed);
+            loadingMore = false;
+            if(totalItemFeed!= null){
+                enableItems(getAdapter());
+            }
 
-            //atualizar o list view
-            items.setAdapter(adapter);
-            items.setTextFilterEnabled(true);
-            //*
-            items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    XmlFeedAdapter adapter = (XmlFeedAdapter) parent.getAdapter();
-                    ItemFeed item = adapter.getItem(position);
-                    String msg = item.getTitle() + " " + item.getLink();
-                    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(view.getContext(),EpisodeDetailActivity.class);
-                    intent.putExtra("item-selected",item );
-                    startActivity(intent);
-                }
-            });
-            /**/
         }
     }
+
+
 
     //TODO Opcional - pesquise outros meios de obter arquivos da internet
     private String getRssFeed(String feed) throws IOException {
@@ -221,12 +236,12 @@ public class MainActivity extends Activity {
         return rssFeed;
     }
 
-
     @Override
     protected void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(onDownloadCompleteEvent);
     }
+
 
     private BroadcastReceiver onDownloadCompleteEvent=new BroadcastReceiver() {
         public void onReceive(Context ctxt, Intent i) {
@@ -238,6 +253,67 @@ public class MainActivity extends Activity {
             action.setEnabled(true);
             action.setText(getString(R.string.action_listen));
         }
+    };
+
+
+    private void enableItems(XmlFeedAdapter adapter){
+        items.addFooterView(footerView);
+
+
+        //atualizar o list view
+        items.setAdapter(adapter);
+        items.setTextFilterEnabled(true);
+        //*
+        items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                XmlFeedAdapter adapter = (XmlFeedAdapter) parent.getAdapter();
+                ItemFeed item = adapter.getItem(position);
+                String msg = item.getTitle() + " " + item.getLink();
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(view.getContext(),EpisodeDetailActivity.class);
+                intent.putExtra("item-selected",item );
+                startActivity(intent);
+            }
+        });
+    }
+
+    private XmlFeedAdapter getAdapter(){
+        if(totalItemFeed == null){
+            return null;
+        }
+        else if(totalItemFeed.size() > itemsToShow) {
+            return new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, totalItemFeed.subList(0, itemsToShow));
+        }
+        else {
+            return new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, totalItemFeed.subList(0, totalItemFeed.size()));
+        }
+    }
+
+    private Runnable returnRes = new Runnable() {
+        @Override
+        public void run() {
+            if(totalItemFeed == null) return;
+            XmlFeedAdapter adapter = getAdapter();
+            adapter.notifyDataSetChanged();
+            loadingMore = false;
+            try {
+                Thread.sleep(700);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            enableItems(adapter);
+        }
+    };
+
+    private Runnable loadMoreListItems = new Runnable() {
+        @Override
+        public void run() {
+            loadingMore = true;
+            itemsToShow +=10;
+            runOnUiThread(returnRes);
+        }
+
     };
 
 
