@@ -1,0 +1,1 @@
+- Refatorei método mergeListsAndInsertNewItensIntoDB() da main activity, para fazer um bulk insert no lugar de vários inserts

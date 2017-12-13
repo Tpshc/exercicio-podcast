@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
     //ao fazer envio da resolucao, use este link no seu codigo!
     private final String RSS_FEED = "http://leopoldomt.com/if710/fronteirasdaciencia.xml";
     //TODO teste com outros links de podcast
-    private boolean isUsingRoom;
+    private final boolean isUsingRoom = false;
     private ListView items;
     private PodcastProvider podcastProvider;
     private AppDatabase roomDB;
@@ -57,7 +57,6 @@ public class MainActivity extends Activity {
         items = (ListView) findViewById(R.id.items);
         podcastProvider = new PodcastProvider();
         roomDB = AppDatabase.getAppDatabase(this.getApplicationContext());//room
-        isUsingRoom = true;
     }
 
     @Override
@@ -141,27 +140,32 @@ public class MainActivity extends Activity {
             return roomDB.itemFeedDAO().getAll();
         }
 
-        private void intertItensIntoRoomDB(List<ItemFeed> items){
+        private void insertItensIntoRoomDB(List<ItemFeed> items){
             long[] x = roomDB.itemFeedDAO().insertAll(items);
         }
 
         private void mergeListsAndInsertNewItensIntoDB(List<ItemFeed> dbList,List<ItemFeed> downloadList, PodcastProvider provider){
             List<ItemFeed> itemsToBeInserted = new ArrayList<ItemFeed>();
-            for(ItemFeed item : downloadList){ //refatorar para bulkinsert
+            for(ItemFeed item : downloadList){
                 if(item.isIn(dbList)) continue;
 
                 dbList.add(item);
 
-                if(!isUsingRoom){
-                    ContentValues values = item.getFullContentValues();
-                    provider.insert(PodcastProviderContract.EPISODE_LIST_URI,values); //insert
-                }else{
-                    itemsToBeInserted.add(item);
-                }
+                itemsToBeInserted.add(item);
             }
 
             if(isUsingRoom){
-                intertItensIntoRoomDB(itemsToBeInserted);
+                insertItensIntoRoomDB(itemsToBeInserted);
+            }else{
+                if(itemsToBeInserted.size() > 0){
+
+                    ContentValues[] contentValues = new ContentValues[itemsToBeInserted.size()];
+                    for (int i = 0; i < itemsToBeInserted.size(); i++){
+                        contentValues[i] = itemsToBeInserted.get(i).getFullContentValues();
+                    }
+                    provider.bulkInsert(PodcastProviderContract.EPISODE_LIST_URI,contentValues);
+
+                }
             }
         }
 
