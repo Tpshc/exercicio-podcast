@@ -1,0 +1,4 @@
+- Adicionei comportamento ao clicar no botão baixar em algum dos podcats baseado no tipo de conexão:
+	-	WIFI: Baixa normalmente
+	- 	Rede Móvel: Alerta o usuário de que ele está prestes a usar sua rede móvel para baixar
+	- 	Sem conexão: Alerta o usuário de que não existe conexão

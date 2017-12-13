@@ -1,15 +1,18 @@
 package br.ufpe.cin.if710.podcast.ui;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,16 +43,15 @@ import br.ufpe.cin.if710.podcast.domain.XmlFeedParser;
 import br.ufpe.cin.if710.podcast.service.DownloadService;
 import br.ufpe.cin.if710.podcast.ui.adapter.XmlFeedAdapter;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
 
     //ao fazer envio da resolucao, use este link no seu codigo!
     private final String RSS_FEED = "http://leopoldomt.com/if710/fronteirasdaciencia.xml";
-    //TODO teste com outros links de podcast
-    private final boolean isUsingRoom = false;
+    private static final int MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 1337;
+    private final boolean isUsingRoom = true;
     private ListView items;
     private PodcastProvider podcastProvider;
     private AppDatabase roomDB;
-    private View footerView;
     private List<ItemFeed> totalItemFeed;
     private boolean loadingMore = false;
     private int itemsToShow = 10;
@@ -58,11 +60,12 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        footerView = ((LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.activity_main, null, false);
 
         items = (ListView) findViewById(R.id.items);
         podcastProvider = new PodcastProvider();
         roomDB = AppDatabase.getAppDatabase(this.getApplicationContext());//room
+
+        askForPermissions();
     }
 
     @Override
@@ -201,13 +204,32 @@ public class MainActivity extends Activity {
         protected void onPostExecute(List<ItemFeed> feed) {
             Toast.makeText(getApplicationContext(), "terminando...", Toast.LENGTH_SHORT).show();
             totalItemFeed = feed;
-            items.addFooterView(footerView);
 
             loadingMore = false;
             if(totalItemFeed!= null){
                 enableItems(getAdapter());
             }
+/*
+            //Adapter Personalizado
+            XmlFeedAdapter adapter = new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, feed, MainActivity.this);
 
+            //atualizar o list view
+            items.setAdapter(adapter);
+            items.setTextFilterEnabled(true);
+
+            items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    XmlFeedAdapter adapter = (XmlFeedAdapter) parent.getAdapter();
+                    ItemFeed item = adapter.getItem(position);
+                    String msg = item.getTitle() + " " + item.getLink();
+                    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(view.getContext(),EpisodeDetailActivity.class);
+                    intent.putExtra("item-selected",item );
+                    startActivity(intent);
+                }
+            });
+*/
         }
     }
 
@@ -255,10 +277,37 @@ public class MainActivity extends Activity {
         }
     };
 
+    //pede permissões
+    private void askForPermissions(){
+        //TODO: ask for permissions if android 6.0+
+        if(ContextCompat.checkSelfPermission(this,android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED){
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE);
+        }
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //permission granted
+                } else {
+                    askForPermissions();
+                }
+                return;
+            }
+        }
+    }
+
 
     private void enableItems(XmlFeedAdapter adapter){
-        items.addFooterView(footerView);
-
 
         //atualizar o list view
         items.setAdapter(adapter);
@@ -283,10 +332,10 @@ public class MainActivity extends Activity {
             return null;
         }
         else if(totalItemFeed.size() > itemsToShow) {
-            return new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, totalItemFeed.subList(0, itemsToShow));
+            return new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, totalItemFeed.subList(0, itemsToShow),MainActivity.this);
         }
         else {
-            return new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, totalItemFeed.subList(0, totalItemFeed.size()));
+            return new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, totalItemFeed.subList(0, totalItemFeed.size()),MainActivity.this);
         }
     }
 
