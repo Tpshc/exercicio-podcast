@@ -43,15 +43,13 @@ public class ItemFeed implements Serializable{
         this.episode_uri = cursor.getString(episode_uri_index);
     }
 
-    public ContentValues getFullContentValues(){
-        ContentValues values = new ContentValues();
+    public void getFullContentValues(ContentValues values){
         values.put(PodcastDBHelper.EPISODE_TITLE, getTitle());
         values.put(PodcastDBHelper.EPISODE_DATE, getPubDate());
         values.put(PodcastDBHelper.EPISODE_DESC, getDescription());
         values.put(PodcastDBHelper.EPISODE_DOWNLOAD_LINK, getDownloadLink());
         values.put(PodcastDBHelper.EPISODE_LINK, getLink());
         values.put(PodcastDBHelper.EPISODE_FILE_URI, getEpisode_uri());
-        return values;
 
     }
 

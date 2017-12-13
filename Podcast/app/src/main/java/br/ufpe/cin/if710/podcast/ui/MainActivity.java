@@ -130,7 +130,8 @@ public class MainActivity extends Activity {
 
                 dbList.add(item);
 
-                ContentValues values = item.getFullContentValues();
+                ContentValues values = new ContentValues();
+                item.getFullContentValues(values);
                 provider.insert(PodcastProviderContract.EPISODE_LIST_URI,values);
             }
         }
