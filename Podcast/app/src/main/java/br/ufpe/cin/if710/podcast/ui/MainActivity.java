@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private final boolean isUsingRoom = true;
     private ListView items;
     private PodcastProvider podcastProvider;
-    private AppDatabase roomDB;
+    private AppDatabase roomDB;//pode extrair para um contentprovider
     private List<ItemFeed> totalItemFeed;
     private boolean loadingMore = false;
     private int itemsToShow = 10;

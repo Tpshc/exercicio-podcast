@@ -1,3 +1,3 @@
 - Alterei a classe de ItemFeed com as notações do room.
-- Adicionei o package room com as classes de DAO para ItemFeed e AppDatabase que além de definir o db serve como um singleton.
+- Adicionei o package room com as classes de DAO para ItemFeed e AppDatabase que além de definir o db serve como um singleton(para evitar gasto de recursos).
 - Adicionei a boolean "isUsingRoom" para alternar entre o room e o bd normal, e alterei os métodos de uso do BD segundo essa boolean.
