@@ -23,3 +23,9 @@
     * delete
     * query
     * update
+    
+- **MainActivityTest**
+    * testClickPodcastInfo
+    * checarPrimeiroElemento
+    * eventosDeTecla
+    
